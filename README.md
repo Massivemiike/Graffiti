@@ -425,7 +425,7 @@ We welcome contributions! Here's how you can help:
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is currently under private development and is not seeking contribution. Code is wholly owned by Michael Wright. 
 
 ---
 
