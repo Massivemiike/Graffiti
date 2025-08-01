@@ -65,43 +65,244 @@
 ### Prerequisites
 
 - **Python 3.8+** installed on your system
-- **PyQt6** for the graphical interface
+- **pip** (Python package installer)
 - At least one AI provider configured (Ollama, LMStudio, or OpenAI API)
 
 ### Step 1: Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/graffiti-app.git
+git clone https://github.com/Massivemiike/Graffiti/graffiti-app.git
 cd graffiti-app
 ```
 
 ### Step 2: Install Dependencies
 
+#### Option A: Using requirements.txt (Recommended)
 ```bash
-pip install PyQt6 requests
+pip install -r requirements.txt
 ```
+
+#### Option B: Manual Installation
+```bash
+pip install PyQt6>=6.4.0 requests>=2.28.0
+```
+
+#### Dependencies Overview
+- **PyQt6** (>=6.4.0) - Modern GUI framework for the user interface
+- **requests** (>=2.28.0) - HTTP library for API communications with AI providers
+
+All other dependencies are part of Python's standard library.
 
 ### Step 3: Set Up AI Provider
 
+> ⚠️ **Hardware Requirements**: Vision models require significant computational resources. Consider your hardware limitations when choosing models:
+> - **QWEN2.5VL:7b**: Requires ~8GB RAM, recommended for most users
+> - **Llama3.2-Vision**: Requires ~4-6GB RAM, lighter alternative
+> - **GPU acceleration** highly recommended for better performance
+
 Choose one or more of the following options:
 
-#### Option A: Ollama (Recommended for Local Processing)
-1. Install Ollama from [ollama.ai](https://ollama.ai)
-2. Pull a vision model:
-   ```bash
-   ollama pull llava
-   # or
-   ollama pull bakllava
+---
+
+## 🐋 Option A: Ollama with Docker (Recommended)
+
+### Windows Setup
+
+#### Prerequisites
+- [Docker Desktop for Windows](https://docs.docker.com/desktop/install/windows-install/)
+- Windows 10/11 with WSL2 enabled
+
+#### Installation Steps
+
+1. **Install Docker Desktop**
+   ```powershell
+   # Download and install Docker Desktop from the official website
+   # Ensure WSL2 integration is enabled
    ```
 
-#### Option B: LMStudio
-1. Download and install [LMStudio](https://lmstudio.ai)
-2. Load a vision-capable model
-3. Start the local server
+2. **Run Ollama Container with Network Access**
+   ```powershell
+   # Pull and run Ollama container
+   docker run -d --name ollama -p 11434:11434 -v ollama:/root/.ollama ollama/ollama
 
-#### Option C: OpenAI API
-1. Get your API key from [OpenAI](https://platform.openai.com)
-2. Configure it in the app settings
+   # Verify container is running
+   docker ps
+   ```
+
+3. **Pull Recommended Vision Models**
+   ```powershell
+   # Option 1: QWEN2.5VL:7b (Recommended for most users)
+   docker exec -it ollama ollama pull qwen2.5-vl:7b
+
+   # Option 2: Llama3.2-Vision (Lighter alternative)
+   docker exec -it ollama ollama pull llama3.2-vision
+   ```
+
+4. **Configure Network Access**
+   ```powershell
+   # Set environment variable for network binding
+   docker exec -it ollama sh -c 'export OLLAMA_HOST=0.0.0.0:11434'
+
+   # Restart container to apply changes
+   docker restart ollama
+   ```
+
+### Linux Setup
+
+#### Prerequisites
+- Docker installed ([Installation Guide](https://docs.docker.com/engine/install/))
+- NVIDIA Docker runtime (for GPU support) - [Setup Guide](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html)
+
+#### Installation Steps
+
+1. **Install Docker** (if not already installed)
+   ```bash
+   # Ubuntu/Debian
+   curl -fsSL https://get.docker.com -o get-docker.sh
+   sudo sh get-docker.sh
+
+   # Add user to docker group
+   sudo usermod -aG docker $USER
+   newgrp docker
+   ```
+
+2. **Run Ollama Container with GPU Support**
+   ```bash
+   # With GPU support (recommended)
+   docker run -d --gpus all --name ollama -p 11434:11434 -v ollama:/root/.ollama ollama/ollama
+
+   # Without GPU (CPU only)
+   docker run -d --name ollama -p 11434:11434 -v ollama:/root/.ollama ollama/ollama
+   ```
+
+3. **Pull Recommended Vision Models**
+   ```bash
+   # Option 1: QWEN2.5VL:7b (Recommended for most users)
+   docker exec -it ollama ollama pull qwen2.5-vl:7b
+
+   # Option 2: Llama3.2-Vision (Lighter alternative)
+   docker exec -it ollama ollama pull llama3.2-vision
+   ```
+
+4. **Configure Network Access**
+   ```bash
+   # Create environment file
+   echo "OLLAMA_HOST=0.0.0.0:11434" > ollama.env
+
+   # Restart container with environment file
+   docker stop ollama
+   docker rm ollama
+   docker run -d --gpus all --name ollama -p 11434:11434 --env-file ollama.env -v ollama:/root/.ollama ollama/ollama
+   ```
+
+#### Verification
+```bash
+# Test Ollama is accessible
+curl http://localhost:11434/api/tags
+
+# Test from another machine (replace YOUR_IP with your machine's IP)
+curl http://YOUR_IP:11434/api/tags
+```
+
+---
+
+## 🖥️ Option B: LMStudio (User-Friendly GUI)
+
+### Installation
+
+1. **Download LMStudio**
+   - Visit [LMStudio.ai](https://lmstudio.ai/)
+   - Download the appropriate version for your OS
+   - Install following the setup wizard
+
+2. **Download Recommended Models**
+
+   **Method 1: Through LMStudio Interface**
+   - Open LMStudio
+   - Navigate to the "Discover" tab
+   - Search for and download:
+     - `qwen2.5-vl-7b-instruct` (Recommended)
+     - `llama-3.2-11b-vision-instruct` (Alternative)
+
+   **Method 2: Direct Model Links**
+   - [QWEN2.5VL:7b on Hugging Face](https://huggingface.co/Qwen/Qwen2.5-VL-7B-Instruct)
+   - [Llama3.2-Vision on Hugging Face](https://huggingface.co/meta-llama/Llama-3.2-11B-Vision-Instruct)
+
+3. **Configure Local Server**
+
+   **Step-by-Step Setup:**
+   ```
+   1. Open LMStudio
+   2. Go to "Local Server" tab
+   3. Select your downloaded vision model
+   4. Configure server settings:
+      - Port: 1234 (default)
+      - Host: 0.0.0.0 (for network access)
+      - Enable CORS: ✓
+   5. Click "Start Server"
+   ```
+
+4. **Network Configuration**
+   ```json
+   {
+     "server_host": "0.0.0.0",
+     "server_port": 1234,
+     "cors_enabled": true,
+     "api_base": "http://localhost:1234/v1"
+   }
+   ```
+
+5. **Verify Installation**
+   ```bash
+   # Test local access
+   curl http://localhost:1234/v1/models
+
+   # Test network access (replace YOUR_IP)
+   curl http://YOUR_IP:1234/v1/models
+   ```
+
+---
+
+## 🌐 Option C: OpenAI API (Cloud-Based)
+
+### Setup Steps
+
+1. **Get API Key**
+   - Visit [OpenAI Platform](https://platform.openai.com/api-keys)
+   - Create account or sign in
+   - Generate new API key
+   - **⚠️ Keep your API key secure and never share it publicly**
+
+2. **Supported Models**
+   - `gpt-4-vision-preview` (Recommended)
+   - `gpt-4o` (Latest with vision capabilities)
+   - `gpt-4o-mini` (Cost-effective option)
+
+3. **Configuration**
+   ```json
+   {
+     "provider": "openai",
+     "api_key": "sk-your-api-key-here",
+     "model": "gpt-4-vision-preview",
+     "base_url": "https://api.openai.com/v1"
+   }
+   ```
+
+---
+
+## 🔧 Quick Configuration Reference
+
+| Provider | Default URL | Recommended Model | Hardware Requirements |
+|----------|-------------|-------------------|----------------------|
+| **Ollama** | `http://localhost:11434` | `qwen2.5-vl:7b` | 8GB+ RAM, GPU recommended |
+| **LMStudio** | `http://localhost:1234` | `qwen2.5-vl-7b-instruct` | 8GB+ RAM, GPU recommended |
+| **OpenAI** | `https://api.openai.com/v1` | `gpt-4-vision-preview` | Internet connection + API credits |
+
+### 🚀 Performance Tips
+- **GPU Acceleration**: Significantly improves processing speed
+- **Model Size**: Larger models = better quality but slower processing
+- **Network Setup**: Ensure firewall allows connections on configured ports
+- **Memory Management**: Close other applications when processing large batches
 
 ---
 
